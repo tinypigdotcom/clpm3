@@ -11,6 +11,31 @@ use JSON;
 use Gipynit::CLPM3::Project;
 
 our $VERSION = '0.01';
+my $MAX_PREV_PROJECTS = 50;
+
+#TODO: write tests
+# _store
+# _read
+# _is_valid_project
+# unset_current_project
+# go_previous_project
+# set_current_project
+
+# structure of data
+#################################################################
+# $self = { 'current' => 't',
+#           'projects' => { 'pa' => { 'files' => { 'a' => '/home/dbradford/t3s/api_test.pl',
+#                                                  'o' => '/home/dbradford/bin/onetime',
+#                                                  'U' => '/opt/manfred/lib/Manfred/SimmCreate.pm' },
+#                                     'commands' => { 'a' => { 'cmd' => '/home/dbradford/t3s/api_test.sh',
+#                                                              'label' => '' },
+#                                                     't' => { 'cmd' => './api_post.sh',
+#                                                              'label' => '' } },
+#                                     'label' => 'Manfred Test Gauntlet (TM)'
+#                                   },
+#                           'pad' => {etc},
+#                         }
+#         };
 
 sub new {
     my ($class,%args) = @_;
@@ -39,7 +64,7 @@ sub _store {
     }
 
     my $json_pretty = $json->pretty;
-    my $utf8_encoded_json_text = $json_pretty->encode( $self->{projects} );
+    my $utf8_encoded_json_text = $json_pretty->encode( $self->{data} );
 
     print $ofh $utf8_encoded_json_text;
     $ofh->close;
@@ -62,8 +87,61 @@ sub _read {
     my $contents = do { local $/; <$ifh> };
     $ifh->close;
 
-    $self->{projects} = $json->decode( $contents );
+    $self->{data} = $json->decode( $contents );
 
+    return;
+}
+
+sub _is_valid_project {
+    my ($self,$alias) = @_;
+    if ( exists $self->{data}->{projects}->{$alias} ) {
+        return 1;
+    }
+    return;
+}
+
+sub unset_current_project {
+    my ($self) = @_;
+    $self->{data}->{current} = '';
+    return;
+}
+
+sub go_previous_project {
+    my ($self) = @_;
+
+    my $prev = pop @{$self->{data}->{previous}};
+    while (defined $prev) {
+        if ( $self->_is_valid_project($prev) ) {
+            $self->set_current_project($prev);
+            return;
+        }
+        $prev = pop @{$self->{data}->{previous}};
+    }
+
+    for my $project (keys %{$self->{data}->{projects}}) {
+        if ( $self->_is_valid_project($project) ) {
+            $self->set_current_project($project);
+            return;
+        }
+    }
+
+    $self->unset_current_project();
+    return;
+}
+
+
+sub set_current_project {
+    my ($self,$alias) = @_;
+
+    if ( $self->{data}->{current} ) {
+        push @{$self->{data}->{previous}}, $self->{data}->{current};
+    }
+
+    if ( $#{$self->{data}->{previous}} >= $MAX_PREV_PROJECTS ) {
+        $#{$self->{data}->{previous}} = $MAX_PREV_PROJECTS - 1;
+    }
+
+    $self->{data}->{current} = $alias;
     return;
 }
 
@@ -71,21 +149,21 @@ sub add_project {
     my ($self,%args) = @_;
 
     my $alias = $args{alias} || '';
-    #TODO: test
     if ( $alias !~ /\w/ ) {
         croak qq{Bad alias "$alias" provided.};
     }
 
     my $description = $args{description};
 
-    $self->{projects}->{$alias}->{description} = $description;
+    $self->{data}->{projects}->{$alias}->{description} = $description;
+    $self->set_current_project($alias);
     $self->_store();
 }
 
 sub get_project {
     my ($self,$alias) = @_;
 
-    my $project_data = $self->{projects}->{$alias};
+    my $project_data = $self->{data}->{projects}->{$alias};
 
     if ( ref $project_data ne 'HASH' ) {
         return;
@@ -101,7 +179,8 @@ sub get_project {
 sub remove_project {
     my ($self,$alias) = @_;
 
-    delete $self->{projects}->{$alias};
+    delete $self->{data}->{projects}->{$alias};
+    $self->go_previous_project();
 
     $self->_store();
     return;

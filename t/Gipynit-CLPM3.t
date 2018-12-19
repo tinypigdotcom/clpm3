@@ -37,6 +37,19 @@ $ENV{CLPM3_DIR} = $TEST_DIRECTORY;
 my $gc = Gipynit::CLPM3->new();
 is(ref $gc, 'Gipynit::CLPM3', 'Got a valid object'); #002
 
+$gc->add_project(
+    alias       => 'a',
+    description => 'Apple thingie',
+);
+$gc->add_project(
+    alias       => 'c',
+    description => 'Cat article',
+);
+$gc->add_project(
+    alias       => 'd',
+    description => 'Drum module',
+);
+
 my $test_letter = 's';
 my $test_description = 'Shopping Cart';
 $gc->add_project(
