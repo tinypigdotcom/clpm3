@@ -11,7 +11,7 @@ use warnings;
 use File::Path;
 use Try::Tiny;
 
-use Test::More tests => 6;
+use Test::More tests => 26;
 BEGIN { use_ok('Gipynit::CLPM3') }; #001
 
 #########################
@@ -30,6 +30,19 @@ mkdir $TEST_DIRECTORY;
 if ( ! -d $TEST_DIRECTORY ) {
     die "Create directory failed for $TEST_DIRECTORY: $!";
 }
+
+sub touch {
+    my ($file) = @_;
+
+    my $test_file = "$TEST_DIRECTORY/$file";
+    open(my $ofh, ">", $test_file)
+        or die "Can't open < $test_file: $!";
+    close $ofh;
+}
+
+touch('elephant.pl');
+touch('fire_engine.pm');
+touch('giraffes.txt');
 
 $ENV{CLPM3_DIR} = $TEST_DIRECTORY;
 
@@ -88,6 +101,65 @@ $gc->remove_project($test_letter);
 $bumble_bee = $gc->get_project($test_letter);
 
 is($bumble_bee, undef, 'Undefined because non-existent'); #006
+
+# my $test_file = "$TEST_DIRECTORY/$file";
+# touch('elephant.pl');
+# touch('fire_engine.pm');
+# touch('giraffes.txt');
+
+$gc->add_file(
+    alias => 'e',
+    path => "$TEST_DIRECTORY/elephant.pl",
+);
+
+my $files = $gc->get_files();
+
+is(ref $files, 'HASH', 'Get a hash of files'); #007
+is(scalar keys %$files, 1, 'Only one file so far'); #008
+is($files->{e}->{basename}, "elephant.pl", 'Correct file stored with correct alias: basename'); #009
+is($files->{e}->{directory}, "$TEST_DIRECTORY/", 'Correct file stored with correct alias: directory'); #010
+is($files->{e}->{path}, "$TEST_DIRECTORY/elephant.pl", 'Correct file stored with correct alias: path'); #011
+
+$gc->add_file(
+    alias => 'f',
+    path => "$TEST_DIRECTORY/fire_engine.pm",
+);
+
+$files = $gc->get_files();
+
+is(ref $files, 'HASH', 'Get a hash of files'); #012
+is(scalar keys %$files, 2, 'Two files so far'); #013
+is($files->{f}->{basename}, "fire_engine.pm", 'Correct file stored with correct alias: basename'); #014
+is($files->{f}->{directory}, "$TEST_DIRECTORY/", 'Correct file stored with correct alias: directory'); #015
+is($files->{f}->{path}, "$TEST_DIRECTORY/fire_engine.pm", 'Correct file stored with correct alias: path'); #016
+
+$gc->add_file(
+    alias => 'g',
+    path => "$TEST_DIRECTORY/giraffes.txt",
+);
+
+$files = $gc->get_files();
+
+is(ref $files, 'HASH', 'Get a hash of files'); #017
+is(scalar keys %$files, 3, 'Three files'); #018
+is($files->{g}->{basename}, "giraffes.txt", 'Correct file stored with correct alias: basename'); #019
+is($files->{g}->{directory}, "$TEST_DIRECTORY/", 'Correct file stored with correct alias: directory'); #020
+is($files->{g}->{path}, "$TEST_DIRECTORY/giraffes.txt", 'Correct file stored with correct alias: path'); #021
+
+$gc->remove_files('e','g');
+
+$files = $gc->get_files();
+
+is(ref $files, 'HASH', 'Get a hash of files'); #022
+is(scalar keys %$files, 1, 'Back to one file'); #023
+is($files->{f}->{basename}, "fire_engine.pm", 'Correct file stored with correct alias: basename'); #024
+is($files->{f}->{directory}, "$TEST_DIRECTORY/", 'Correct file stored with correct alias: directory'); #025
+is($files->{f}->{path}, "$TEST_DIRECTORY/fire_engine.pm", 'Correct file stored with correct alias: path'); #026
+
+
+#TODO: test bad behavior like:
+# * overwriting a current file
+# * non-existent file
 
 #Command Line Program Managers (clpm) v2.0.0
 #Help commands:

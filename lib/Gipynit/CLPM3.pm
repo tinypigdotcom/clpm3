@@ -7,12 +7,18 @@ use warnings;
 use lib 'lib';
 
 use Carp;
+use Cwd;
+use File::Basename ();
 use JSON;
 use Gipynit::CLPM3::Project;
 
 our $VERSION = '0.01';
 my $MAX_PREV_PROJECTS = 50;
 
+#TODO:
+# complex data structure is hard to read. Make it less complex, ala
+# get_current_project_href
+#
 #TODO: write tests
 # _store
 # _read
@@ -130,6 +136,12 @@ sub go_previous_project {
 }
 
 
+sub get_current_project_href {
+    my ($self) = @_;
+
+    return $self->{data}->{projects}->{ $self->{data}->{current} };
+}
+
 sub set_current_project {
     my ($self,$alias) = @_;
 
@@ -186,6 +198,69 @@ sub remove_project {
     return;
 }
 
+sub add_file {
+    my ($self,%args) = @_;
+
+    my $alias = $args{alias} || '';
+
+    if ( $alias !~ /\w/ ) {
+        croak qq{Bad alias "$alias" provided.};
+    }
+
+    my $path = Cwd::abs_path( $args{path} ) || '';
+
+    if ( ! -r $path ) {
+        croak qq{Can't read file "$path".};
+    }
+
+    my ($basename, $directory) = File::Basename::fileparse($path);
+    my $current_project = $self->get_current_project_href();
+
+    $current_project->{files}->{$alias} = {
+         basename  => $basename,
+         directory => $directory,
+         path      => $path,
+    };
+    $self->_store();
+}
+
+sub remove_files {
+    my ($self,@file_aliases) = @_;
+
+    my $current_project = $self->get_current_project_href();
+
+    for my $alias ( @file_aliases ) {
+        delete $current_project->{files}->{$alias};
+    }
+
+    $self->_store();
+    return;
+}
+
+
+sub get_files {
+    my ($self) = @_;
+
+    my $current_project = $self->get_current_project_href();
+
+    return $current_project->{files};
+}
+
+# $gc->add_file(
+#     alias => 'e',
+#     path => "$TEST_DIRECTORY/elephant.pl",
+# );
+#
+# my $files = $gc->get_files();
+# $files = {
+#     c => {
+#         basename => 'CLPM3.pm',
+#         directory => '/home/dbradford/clpm3/lib/Gipynit',
+#         path => '/home/dbradford/clpm3/lib/Gipynit/CLPM3.pm',
+#     },
+# };
+
+
 1;
 __END__
 # Below is stub documentation for your module. You'd better edit it!
@@ -238,3 +313,4 @@ at your option, any later version of Perl 5 you may have available.
 
 
 =cut
+
