@@ -1,0 +1,6 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Gipynit-CLPM3.t
+lib/Gipynit/CLPM3.pm
