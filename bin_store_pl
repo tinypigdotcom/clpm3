@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+#VERSION 0.0.2
+
+use strict;
+use warnings;
+
+use lib './lib';
+use Tinypig::Store::App;
+
+sub main {
+    my @args = @_;
+
+    my %opts;
+    if (($args[0]||'') eq '-t') {
+        shift @args;
+        $opts{test} = 1;
+    }
+
+    my $app  = Tinypig::Store::App->new(%opts);
+    $app->run(@args);
+    return;
+}
+
+my $rc = ( main(@ARGV) || 0 );
+
+exit $rc;
+

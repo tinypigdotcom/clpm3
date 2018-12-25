@@ -3,4 +3,5 @@ Makefile.PL
 MANIFEST
 README
 t/Gipynit-CLPM3.t
+t/Gipynit-CLPM3-cmd.t
 lib/Gipynit/CLPM3.pm

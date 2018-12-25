@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+# purpose: Command Line Project Manager
+
+use strict;
+use warnings FATAL => 'all';
+
+use lib './lib';
+use Gipynit::CLPM3;
+
+sub main {
+    my @argv = @_;
+    my $app  = Gipynit::CLPM3->new();
+    $app->run(@argv);
+    return;
+}
+
+my $rc = ( main(@ARGV) || 0 );
+
+exit $rc;
+

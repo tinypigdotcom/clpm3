@@ -1,0 +1,8 @@
+./MANIFEST:bin/store.pl
+./t/Tinypig-Store-App-cmd.t:my $command = 'bin/store.pl -t';
+./t/Tinypig-Store-App-cmd2.t:my $command = 'bin/store.pl -t';
+./Makefile.PL:        "bin/store.pl"
+./MANIFEST:bin/store.pl
+./t/Tinypig-Store-App-cmd.t:my $command = 'bin/store.pl -t';
+./t/Tinypig-Store-App-cmd2.t:my $command = 'bin/store.pl -t';
+./Makefile.PL:        "bin/store.pl"

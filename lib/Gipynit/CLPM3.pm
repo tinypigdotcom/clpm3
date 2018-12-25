@@ -11,9 +11,16 @@ use Cwd;
 use File::Basename ();
 use JSON;
 use Gipynit::CLPM3::Project;
+use Getopt::Long;
+
+BEGIN { $| = 1 }
 
 our $VERSION = '0.01';
 my $MAX_PREV_PROJECTS = 50;
+
+my $PROG = File::Basename::basename($0);
+my $ERR_EXIT = 2;
+my $TEST_DIRECTORY = "$ENV{HOME}/.clpm3test";
 
 #TODO:
 # complex data structure is hard to read. Make it less complex, ala
@@ -260,6 +267,126 @@ sub get_files {
 #     },
 # };
 
+sub usage_top {
+    my ($self) = @_;
+    warn "Usage: $PROG FILE1 FILE2\n";
+}
+
+sub short_usage {
+    my ($self) = @_;
+    $self->usage_top();
+    warn "Try '$PROG --help' for more information.\n";
+}
+
+sub errout {
+    my ($self) = @_;
+    my $message = join( ' ', @_ );
+    warn "$PROG: $message\n";
+    $self->short_usage();
+    exit $ERR_EXIT;
+}
+
+sub usage {
+    my ($self) = @_;
+    $self->usage_top();
+    warn <<EOF;
+diff two files like they were hashes TODO
+Example: $PROG old_coords.txt new_coords.txt TODO
+
+-h, --help    display this help text and exit
+-v, --version display version information and exit
+
+EOF
+    return;
+}
+
+sub do_short_usage {
+    my ($self) = @_;
+    $self->short_usage();
+    exit $ERR_EXIT;
+}
+
+sub version {
+    my ($self) = @_;
+    warn "$PROG $VERSION\n";
+    return;
+}
+
+sub cmd {
+    my ($self) = @_;
+
+    my $h        = 0;
+    my $help     = 0;
+    my $version  = 0;
+
+    Getopt::Long::Configure ("bundling");
+
+    my %options = (
+        "help"   => \$help,
+        "version" => \$version,
+    );
+
+    # Explicitly add single letter version of each option to allow bundling
+    my ($key, $value);
+    my %temp = %options;
+    while (($key,$value) = each %temp) {
+        my $letter = $key;
+        $letter =~ s/(\w)\w*/$1/;
+        $options{$letter} = $value;
+    }
+    # Fix-ups from previous routine
+    $options{h} = \$h;
+
+    GetOptions(%options) or errout("Error in command line arguments");
+
+    if    ($help)     { $self->usage(); exit    }
+    elsif ($h)        { $self->do_short_usage() }
+    elsif ($version)  { $self->version(); exit  }
+}
+
+# !!! NOTE !!!
+# Below here, it's not Object-Oriented. Test code needs to be outside the
+# object because it needs to do some initiation before new() runs.
+
+sub touch {
+    my ($file) = @_;
+
+    my $test_file = "$TEST_DIRECTORY/$file";
+    open(my $ofh, ">", $test_file)
+        or die "Can't open < $test_file: $!";
+    close $ofh;
+}
+
+sub remove_test_directory {
+    File::Path::remove_tree($TEST_DIRECTORY);
+    if ( -d $TEST_DIRECTORY ) {
+        die "Remove directory failed for $TEST_DIRECTORY: $!";
+    }
+}
+
+sub test_init {
+    # Remove and create test data directory so we're starting from scratch
+    remove_test_directory();
+
+    mkdir $TEST_DIRECTORY;
+    if ( ! -d $TEST_DIRECTORY ) {
+        die "Create directory failed for $TEST_DIRECTORY: $!";
+    }
+
+    touch('elephant.pl');
+    touch('fire_engine.pm');
+    touch('giraffes.txt');
+
+    $ENV{CLPM3_DIR} = $TEST_DIRECTORY;
+}
+
+sub test_cleanup {
+    remove_test_directory();
+}
+
+sub get_test_directory {
+    return $TEST_DIRECTORY;
+}
 
 1;
 __END__
