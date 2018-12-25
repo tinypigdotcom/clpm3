@@ -9,6 +9,7 @@ use lib 'lib';
 use Carp;
 use Cwd;
 use File::Basename ();
+use File::Path ();
 use JSON;
 use Gipynit::CLPM3::Project;
 use Getopt::Long;
@@ -69,6 +70,8 @@ sub _store {
 
     my $json = $self->{json};
     my $store_file = $self->{store_file};
+
+    File::Path::make_path( File::Basename::dirname($store_file) );
 
     my $ofh = IO::File->new($store_file, '>');
     if ( !defined $ofh ) {
@@ -290,12 +293,33 @@ sub usage {
     my ($self) = @_;
     $self->usage_top();
     warn <<EOF;
-diff two files like they were hashes TODO
-Example: $PROG old_coords.txt new_coords.txt TODO
-
--h, --help    display this help text and exit
--v, --version display version information and exit
-
+Command Line Project Manager (clpm) $VERSION
+Help commands:
+            z  - this listing
+Organization commands:
+            f  - manage files
+                examples:
+                show list of files:    \$ f
+                edit file 1, 3, and L: \$ f 13L
+                edit all files:        \$ fa
+                add file to the list : \$ f , /tmp/a.dmb /etc/hosts /etc/passwd
+                add file with label L: \$ f L /tmp/a.dmb
+                remove file 1, 3, L  : \$ f -13L
+            x  - manage commands (same basic format as f)
+                examples:
+                show list of cmds:     \$ x
+                run cmd 1, 3, and L:   \$ x 13L
+                edit cmd 1, 3, and L:  \$ x .13L
+                run all cmds:          \$ xa
+                add cmd to the list :  \$ x , 'echo hey' 'Optional Label'
+                    NOTE: surround command with quotes
+                add cmd with label L:  \$ x L 'echo howdy; echo there' 'Optional Label'
+                remove cmd 1, 3, L  :  \$ x -13L
+            p  - change project/view list of projects
+                show project list:     \$ p
+                switch to project:     \$ p myproj
+                remove project:        \$ p -myproj
+Current project: c
 EOF
     return;
 }
@@ -312,7 +336,7 @@ sub version {
     return;
 }
 
-sub cmd {
+sub run {
     my ($self) = @_;
 
     my $h        = 0;
@@ -368,7 +392,7 @@ sub test_init {
     # Remove and create test data directory so we're starting from scratch
     remove_test_directory();
 
-    mkdir $TEST_DIRECTORY;
+    File::Path::make_path($TEST_DIRECTORY);
     if ( ! -d $TEST_DIRECTORY ) {
         die "Create directory failed for $TEST_DIRECTORY: $!";
     }
