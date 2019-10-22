@@ -19,11 +19,11 @@ BEGIN { use_ok('Gipynit::CLPM3') }; #001
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
 
-Gipynit::CLPM3::test_init();
-my $TEST_DIRECTORY = Gipynit::CLPM3::get_test_directory();
-
 # Get a new object
 my $gc = Gipynit::CLPM3->new();
+
+$gc->test_init();
+my $TEST_DIRECTORY = $gc->get_test_directory();
 
 is(ref $gc, 'Gipynit::CLPM3', 'Got a valid object'); #002
 

@@ -15,8 +15,11 @@ use Try::Tiny;
 
 BEGIN { use_ok('Gipynit::CLPM3') }; #001
 
-Gipynit::CLPM3::test_init();
-my $TEST_DIRECTORY = Gipynit::CLPM3::get_test_directory();
+# Get a new object
+my $gc = Gipynit::CLPM3->new();
+
+$gc->test_init();
+my $TEST_DIRECTORY = $gc->get_test_directory();
 
 $ENV{PATH} = "./bin/:$ENV{PATH}";
 
@@ -37,8 +40,7 @@ like($help, qr{Command Line Project Manager}, 'Got usage message'); #003
 
 __END__
 
-my $json = JSON->new->allow_nonref;
-
+my $json = JSON->new->allow_nonref; 
 my $command = 'bin/store.pl -t';
 
 unlink "$ENV{HOME}/test_store.db";

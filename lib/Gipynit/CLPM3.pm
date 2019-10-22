@@ -116,6 +116,15 @@ sub _is_valid_project {
     return;
 }
 
+sub reset_store_file {
+    my ($self,$store_file) = @_;
+
+    $self->{store_file} = $store_file;
+    $self->_read();
+
+    return;
+}
+
 sub unset_current_project {
     my ($self) = @_;
     $self->{data}->{current} = '';
@@ -368,12 +377,8 @@ sub run {
     elsif ($version)  { $self->version(); exit  }
 }
 
-# !!! NOTE !!!
-# Below here, it's not Object-Oriented. Test code needs to be outside the
-# object because it needs to do some initiation before new() runs.
-
 sub touch {
-    my ($file) = @_;
+    my ($self,$file) = @_;
 
     my $test_file = "$TEST_DIRECTORY/$file";
     open(my $ofh, ">", $test_file)
@@ -382,6 +387,7 @@ sub touch {
 }
 
 sub remove_test_directory {
+    my ($self) = @_;
     File::Path::remove_tree($TEST_DIRECTORY);
     if ( -d $TEST_DIRECTORY ) {
         die "Remove directory failed for $TEST_DIRECTORY: $!";
@@ -389,26 +395,31 @@ sub remove_test_directory {
 }
 
 sub test_init {
+    my ($self) = @_;
     # Remove and create test data directory so we're starting from scratch
-    remove_test_directory();
+    $self->remove_test_directory();
 
     File::Path::make_path($TEST_DIRECTORY);
     if ( ! -d $TEST_DIRECTORY ) {
         die "Create directory failed for $TEST_DIRECTORY: $!";
     }
 
-    touch('elephant.pl');
-    touch('fire_engine.pm');
-    touch('giraffes.txt');
+    $self->touch('elephant.pl');
+    $self->touch('fire_engine.pm');
+    $self->touch('giraffes.txt');
 
     $ENV{CLPM3_DIR} = $TEST_DIRECTORY;
+
+    $self->reset_store_file("$ENV{CLPM3_DIR}/projects.json");
 }
 
 sub test_cleanup {
-    remove_test_directory();
+    my ($self) = @_;
+    $self->remove_test_directory();
 }
 
 sub get_test_directory {
+    my ($self) = @_;
     return $TEST_DIRECTORY;
 }
 
